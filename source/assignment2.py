@@ -1,14 +1,21 @@
 from fileio import readDocuments, readStopwords
 from util import PreprocessDocuments, StemDocuments
-import time
-
+from indexer import GenerateInvertedIndex
 
 def __main__() :
     #Reading documents from the file
     documents = readDocuments()
     stopwords = readStopwords()
+    # This does not stem the documents ( only lowercases and removes stopwords)
     processedDocuments = PreprocessDocuments(documents, stopwords)
+    print('Documents are preprocessed and ready to be used for indexing')
+    # This stems the documents as well along with preprocessing
     stemmedDocuments = StemDocuments(processedDocuments)
-    print('Documents are tokenized and ready to be used for indexing')
+    print('Documents are stemmed along with preprocessed and ready to be used for indexing')
+    invertedIndexWithoutStem = GenerateInvertedIndex(processedDocuments)
+    print('Inverted index is generated for preprocessed dcouments')
+    invertedIndexWithStem = GenerateInvertedIndex(stemmedDocuments)
+    print('Inverted index is generated for stemmed dcouments')
+    
 
 __main__()
