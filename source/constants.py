@@ -4,3 +4,4 @@ class Constants:
     COMMA = ','
     APOSTROPHE = '\''
     PUNCTUATIONS = '.,!?;()[]\{\}<>/\|@#$%^&*-_+=~`"'
+    BATCH_SIZE = 500
