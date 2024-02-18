@@ -1,19 +1,32 @@
+from constants import Constants
 
 # Generating inverted index for the documents
-def GenerateInvertedIndex(documents):
-    term_dict = {}
+# This stores the inverted index in the following format:
+# term -> {documentID -> [list of positions of the term in the document]}
+# DF = number of keys in the dictionary for a term, TTF = sum of the length of the list of positions for a term
+def GenerateIndexes(documents):
+    vocabulary = set() # Set of all unique terms in the corpus
+    corpusSize = 0 # Total number of terms in the corpus
+    documentIndex = {}
     for documentID in documents:
-        term_dict[documentID] = {}
+        documentIndex[documentID] = {}
         for word in documents[documentID]:
             indices = [i for i, x in enumerate(documents[documentID]) if x == word]
-            term_dict[documentID][word] = indices
+            documentIndex[documentID][word] = indices
+            vocabulary.add(word)
+            corpusSize += 1
     
-    inverted_index = {}
-    for documentID in term_dict:
-        for word in term_dict[documentID]:
-            if word not in inverted_index:
-                inverted_index[word] = {}
-            if documentID not in inverted_index[word]:
-                inverted_index[word][documentID] = term_dict[documentID][word]
+    termIndex = {}
+    for documentID in documentIndex:
+        for word in documentIndex[documentID]:
+            if word not in termIndex:
+                termIndex[word] = {}
+            if documentID not in termIndex[word]:
+                termIndex[word][documentID] = documentIndex[documentID][word]
 
-    return inverted_index
+    return {
+        Constants.DOCUMENT_INDEX : documentIndex,
+        Constants.TERM_INDEX : termIndex,
+        Constants.VOCABULARY_SIZE : len(vocabulary),
+        Constants.CORPUS_SIZE : corpusSize
+    }

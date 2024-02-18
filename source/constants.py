@@ -4,4 +4,8 @@ class Constants:
     COMMA = ','
     APOSTROPHE = '\''
     PUNCTUATIONS = '.,!?;()[]\{\}<>/\|@#$%^&*-_+=~`"'
-    BATCH_SIZE = 500
+    BATCH_SIZE = 500,
+    DOCUMENT_INDEX = 'DOCUMENT_INDEX'
+    TERM_INDEX = 'TERM_INDEX'
+    VOCABULARY_SIZE = 'VOCABULARY_SIZE'
+    CORPUS_SIZE = 'CORPUS_SIZE'
