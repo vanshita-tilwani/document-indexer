@@ -1,10 +1,14 @@
 class Constants:
     DATA_PATH = '/Users/vanshitatilwani/Documents/Courses_Local/CS6200/hw2-vanshita-tilwani/IR_data/AP_DATA/ap89_collection'
     STOPWORDS_PATH = '/Users/vanshitatilwani/Documents/Courses_Local/CS6200/hw2-vanshita-tilwani/resources/stoplist.txt'
+    RESOURCES_PATH = '/Users/vanshitatilwani/Documents/Courses_Local/CS6200/hw2-vanshita-tilwani/resources'
+    OUTPUT_PATH = '/Users/vanshitatilwani/Documents/Courses_Local/CS6200/hw2-vanshita-tilwani/output'
+    INDEX_TYPE_STEMMED = 'stemmed'
+    INDEX_TYPE_UNSTEMMED = 'unstemmed'
     COMMA = ','
     APOSTROPHE = '\''
     PUNCTUATIONS = '.,!?;()[]\{\}<>/\|@#$%^&*-_+=~`"'
-    BATCH_SIZE = 500,
+    BATCH_SIZE : int = 1000
     DOCUMENT_INDEX = 'DOCUMENT_INDEX'
     TERM_INDEX = 'TERM_INDEX'
     VOCABULARY_SIZE = 'VOCABULARY_SIZE'

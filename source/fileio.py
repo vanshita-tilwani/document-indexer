@@ -1,4 +1,5 @@
 import os
+import json
 from concurrent.futures import ThreadPoolExecutor
 from constants import Constants
 from util import  ParseDocuments, ParseDocument
@@ -30,3 +31,21 @@ def readStopwords() :
         names = content.split("\n")
     return names
 
+def writeInvertedList(path, filename, data) :
+    complete_filemane = Constants.OUTPUT_PATH + '/' + path + '/'  + filename
+    with open(complete_filemane, 'a+') as f:
+        f.write(json.dumps(data, indent=4))
+
+def currentOffset(path, filename):
+    try:
+        complete_filemane = Constants.OUTPUT_PATH + '/' + path + '/'  + filename
+        with open(complete_filemane, 'r') as f:
+            f.seek(0, os.SEEK_END)
+            return f.tell()
+    except FileNotFoundError:
+        return 0
+
+def seekFile(path, filename, offset, length):
+    with open(Constants.OUTPUT_PATH + '/' + path + '/'  + filename, 'r') as f:
+        f.seek(offset)
+        return f.read(length)

@@ -11,7 +11,7 @@ def PreprocessDocuments(documents, stopwords):
     def ProcessBatch(batch):
         results = {}
         with ThreadPoolExecutor() as executor:
-            futures = {executor.submit(PreprocessDocument, docID, docText,stopwords): docID for docID, docText in batch.items()}
+            futures = {executor.submit(PreprocessDocument, docText,stopwords): docID for docID, docText in batch.items()}
             for future in as_completed(futures):
                 docID = futures[future]
                 try:
@@ -74,10 +74,10 @@ def StemDocument(docID, docText):
     return docID, docText
 
 # Preprocess the given document i,e tokenize and remove stopwords
-def PreprocessDocument(docId, docText, stopwords):
+def PreprocessDocument(docText, stopwords):
     docText = Tokenize(docText)
     docText = RemoveStopWords(docText, stopwords)
-    return docId, docText
+    return docText
 
 # Remove the stopwords from the given text
 def RemoveStopWords(docText, stopwords):
