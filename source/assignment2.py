@@ -4,7 +4,7 @@ from indexer import GenerateInvertedIndex
 from constants import Constants
 import glob
 import os
-
+import json
 
 
 def __main__() :

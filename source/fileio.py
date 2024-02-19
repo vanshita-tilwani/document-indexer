@@ -31,10 +31,10 @@ def readStopwords() :
         names = content.split("\n")
     return names
 
-def writeInvertedList(path, filename, data) :
+def write(path, filename, data) :
     complete_filemane = Constants.OUTPUT_PATH + '/' + path + '/'  + filename
     with open(complete_filemane, 'a+') as f:
-        f.write(json.dumps(data, indent=4))
+        f.write(json.dumps(data, indent=None))
 
 def currentOffset(path, filename):
     try:

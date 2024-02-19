@@ -1,5 +1,5 @@
 from constants import Constants
-from fileio import writeInvertedList, currentOffset, seekFile
+from fileio import write, currentOffset, seekFile
 import json
 from concurrent.futures import ThreadPoolExecutor,as_completed
 
@@ -19,7 +19,7 @@ def GenerateInvertedIndex(type, documents):
         for term in invertedIndex[Constants.TERM_INDEX]:
             filename = 'inverted_index' + str(index) + '.json'
             startOffset = currentOffset(type, filename)
-            writeInvertedList(type, 'inverted_index' + str(index) + '.json' , invertedIndex[Constants.TERM_INDEX][term])
+            write(type, 'inverted_index' + str(index) + '.json' , invertedIndex[Constants.TERM_INDEX][term])
             endOffset = currentOffset(type, filename)
             if term not in partial_list_catalog:
                 partial_list_catalog[term] = []
@@ -35,7 +35,7 @@ def GenerateInvertedIndex(type, documents):
                 pass
             except Exception as exc:
                 print(f"Processing failed for batch {index}: {exc}")
-                
+
     catalog = {}
     for term in partial_list_catalog:
         invertedIndexByTerm = {}
@@ -45,11 +45,12 @@ def GenerateInvertedIndex(type, documents):
             partialIndexByTerm = json.loads(data)
             invertedIndexByTerm = __mergeInvertedIndexes(invertedIndexByTerm, partialIndexByTerm)
         startOffset = currentOffset(type, 'inverted_index.json')
-        writeInvertedList(type, 'inverted_index.json', invertedIndexByTerm)
+        write(type, 'inverted_index.json', invertedIndexByTerm)
         endOffset = currentOffset(type, 'inverted_index.json')
         catalog[term] = {'path' : type, 'filename' : 'inverted_index.json', 'start' : startOffset, 'size' : endOffset - startOffset}
-
-    return partial_list_catalog
+    
+    write(type, 'catalog.json', catalog)
+    return catalog
 
 # Generate the inverted index for the given documents
 def __generateInvertedIndex(documents):
