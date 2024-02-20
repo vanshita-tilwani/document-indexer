@@ -11,11 +11,11 @@ import ast
 # Type denotes the type of the document, which can be stemmed or unstemmed
 def GenerateInvertedIndex(type, documents):
     #split the document into batches of 1000
-    global catalog 
+    catalog = {}
     total_batches = [dict(list(documents.items())[i:i+Constants.BATCH_SIZE]) for i in range(0, len(documents), Constants.BATCH_SIZE)]
     
     with ThreadPoolExecutor() as executor:
-        futures = {executor.submit(__processBatch, index, batch, type): (index, batch) for index, batch in enumerate(total_batches)}
+        futures = {executor.submit(__processBatch, catalog, index, batch, type): (index, batch) for index, batch in enumerate(total_batches)}
         for future in as_completed(futures):
             index, batch = futures[future]
             try:
@@ -43,15 +43,15 @@ def GenerateInvertedIndex(type, documents):
 
 def __writePartialInvertedIndex(term, type, filename, invertedIndex):
     startOffset = currentOffset(type, filename)
-    write(type, filename , invertedIndex[Constants.TERM_INDEX][term])
+    write(type, filename , invertedIndex[term])
     endOffset = currentOffset(type, filename)
     return startOffset, endOffset - startOffset
 
-def __processBatch(index, batch, type) :
-        global catalog
+def __processBatch(catalog, index, batch, type) :
+        
         invertedIndex = __generateInvertedIndex(batch)
         partial_catalog = {}
-        for term in invertedIndex[Constants.TERM_INDEX]:
+        for term in invertedIndex:
             # Write the inverted index to the file
             partial_index_filename = Constants.INDEX_FILE_NAME + str((index+1)) + '.txt'
             startOffset, size = __writePartialInvertedIndex(term, type, partial_index_filename, invertedIndex)
@@ -69,8 +69,7 @@ def __processBatch(index, batch, type) :
 
 # Generate the inverted index for the given documents
 def __generateInvertedIndex(documents):
-    global vocabulary
-    global corpusSize
+    
     documentIndex = {}
     for documentID in documents:
         documentIndex[documentID] = {}
@@ -88,12 +87,7 @@ def __generateInvertedIndex(documents):
             if documentID not in termIndex[word]:
                 termIndex[word][documentID] = documentIndex[documentID][word]
 
-    return {
-        Constants.DOCUMENT_INDEX : documentIndex,
-        Constants.TERM_INDEX : termIndex,
-        Constants.VOCABULARY_SIZE : len(vocabulary),
-        Constants.CORPUS_SIZE : corpusSize
-    }
+    return termIndex
 
 def __mergeInvertedIndexes(indexes, partial):
     for document in partial :
@@ -102,7 +96,3 @@ def __mergeInvertedIndexes(indexes, partial):
         else:
             indexes[document] = partial[document]
     return indexes
-
-catalog = {} # Catalog of the inverted index
-vocabulary = set() # Set of all unique terms in the corpus
-corpusSize = 0 # Total number of terms in the corpus

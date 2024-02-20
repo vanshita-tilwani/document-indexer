@@ -4,7 +4,7 @@ from indexer import GenerateInvertedIndex
 from constants import Constants
 import glob
 import os
-import json
+import copy
 
 
 def __main__() :
@@ -14,14 +14,14 @@ def __main__() :
     documents = readDocuments()
     stopwords = readStopwords()
     # This does not stem the documents ( only lowercases and removes stopwords)
-    processedDocuments = PreprocessDocuments(documents, stopwords)
+    processedDocuments = PreprocessDocuments(copy.deepcopy(documents), stopwords)
     print('Documents are preprocessed and ready to be used for indexing')
     # This stems the documents as well along with preprocessing
-    indexesWithoutStem = GenerateInvertedIndex(Constants.INDEX_TYPE_UNSTEMMED, processedDocuments)
+    indexesWithoutStem = GenerateInvertedIndex(Constants.INDEX_TYPE_UNSTEMMED, copy.deepcopy(processedDocuments))
     print('Inverted index is generated for preprocessed dcouments')
-    stemmedDocuments = StemDocuments(processedDocuments)
+    stemmedDocuments = StemDocuments(copy.deepcopy(processedDocuments))
     print('Documents are stemmed along with preprocessed and ready to be used for indexing')
-    indexesWithStem = GenerateInvertedIndex(Constants.INDEX_TYPE_STEMMED, stemmedDocuments)
+    indexesWithStem = GenerateInvertedIndex(Constants.INDEX_TYPE_STEMMED, copy.deepcopy(stemmedDocuments))
     print('Inverted index is generated for stemmed dcouments')
 
 def cleanup() :
