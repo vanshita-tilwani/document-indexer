@@ -76,8 +76,7 @@ def __generateInvertedIndex(documents):
         for word in documents[documentID]:
             indices = [i for i, x in enumerate(documents[documentID]) if x == word]
             documentIndex[documentID][word] = indices
-            vocabulary.add(word)
-            corpusSize += 1
+    
     
     termIndex = {}
     for documentID in documentIndex:
