@@ -1,8 +1,7 @@
 from constants import Constants
 from fileio import write, currentOffset, seekFile
-import json
 from concurrent.futures import ThreadPoolExecutor,as_completed
-
+import ast
 # Generating inverted index for the documents
 # This stores the inverted index in the following format:
 # documentID -> {term -> [list of positions of the term in the document]}
@@ -17,9 +16,9 @@ def GenerateInvertedIndex(type, documents):
     def _processBatch(index, batch, type) :
         invertedIndex = __generateInvertedIndex(batch)
         for term in invertedIndex[Constants.TERM_INDEX]:
-            filename = 'inverted_index' + str(index) + '.json'
+            filename = 'inverted_index' + str(index) + '.txt'
             startOffset = currentOffset(type, filename)
-            write(type, 'inverted_index' + str(index) + '.json' , invertedIndex[Constants.TERM_INDEX][term])
+            write(type, 'inverted_index' + str(index) + '.txt' , invertedIndex[Constants.TERM_INDEX][term])
             endOffset = currentOffset(type, filename)
             if term not in partial_list_catalog:
                 partial_list_catalog[term] = []
@@ -42,12 +41,12 @@ def GenerateInvertedIndex(type, documents):
         for index in range(0, len(partial_list_catalog[term])):
             currentPartialList = partial_list_catalog[term][index]
             data = seekFile(currentPartialList['path'], currentPartialList['filename'], currentPartialList['start'], currentPartialList['size'])
-            partialIndexByTerm = json.loads(data)
+            partialIndexByTerm = ast.literal_eval(data)
             invertedIndexByTerm = __mergeInvertedIndexes(invertedIndexByTerm, partialIndexByTerm)
-        startOffset = currentOffset(type, 'inverted_index.json')
-        write(type, 'inverted_index.json', invertedIndexByTerm)
-        endOffset = currentOffset(type, 'inverted_index.json')
-        catalog[term] = {'path' : type, 'filename' : 'inverted_index.json', 'start' : startOffset, 'size' : endOffset - startOffset}
+        startOffset = currentOffset(type, 'inverted_index.txt')
+        write(type, 'inverted_index.txt', invertedIndexByTerm)
+        endOffset = currentOffset(type, 'inverted_index.txt')
+        catalog[term] = {'path' : type, 'filename' : 'inverted_index.txt', 'start' : startOffset, 'size' : endOffset - startOffset}
     
     write(type, 'catalog.json', catalog)
     return catalog

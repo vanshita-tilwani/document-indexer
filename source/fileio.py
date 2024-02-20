@@ -34,7 +34,9 @@ def readStopwords() :
 def write(path, filename, data) :
     complete_filemane = Constants.OUTPUT_PATH + '/' + path + '/'  + filename
     with open(complete_filemane, 'a+') as f:
-        f.write(json.dumps(data, indent=None))
+        str = json.dumps(data, separators=(',', ':'), indent=None)
+        str = str.replace('"', '')
+        f.write(str)
 
 def currentOffset(path, filename):
     try:
