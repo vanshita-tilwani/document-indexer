@@ -3,6 +3,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from constants import Constants
 from util import  ParseDocuments, ParseDocument
+import ast
 
 def readDocument(filename) :
     with open(os.path.join(Constants.DATA_PATH, filename), 'rb') as f:
@@ -31,12 +32,22 @@ def readStopwords() :
         names = content.split("\n")
     return names
 
-def write(path, filename, data) :
+def write(path, filename, data, replaceQuotes = True) :
     complete_filemane = Constants.OUTPUT_PATH + '/' + path + '/'  + filename
     with open(complete_filemane, 'a+') as f:
         str = json.dumps(data, separators=(',', ':'), indent=None)
-        str = str.replace('"', '')
+        if replaceQuotes:
+            str = str.replace('"', '')
         f.write(str)
+
+def readCatalog(path) :
+    try :
+        complete_filemane = Constants.OUTPUT_PATH + '/' + path + '/'  + Constants.CATALOG_FILE_NAME + '.json'
+        with open(complete_filemane, 'r') as f:
+            data = f.read()
+        return json.loads(data)
+    except FileNotFoundError:
+        return {}
 
 def currentOffset(path, filename):
     try:
@@ -50,4 +61,4 @@ def currentOffset(path, filename):
 def seekFile(path, filename, offset, length):
     with open(Constants.OUTPUT_PATH + '/' + path + '/'  + filename, 'r') as f:
         f.seek(offset)
-        return f.read(length)
+        return ast.literal_eval(f.read(length))

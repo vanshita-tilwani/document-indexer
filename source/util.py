@@ -25,16 +25,16 @@ def PreprocessDocuments(documents, stopwords):
     return processedDocuments
 
 def StemDocuments(documents):
-    
+    stemmedDocuments = {}
     with ThreadPoolExecutor() as executor:
-        futures = {executor.submit(__stemDocument, docID, docText): docID for docID, docText in documents.items()}
+        futures = {executor.submit(__stemDocument, docText): docID for docID, docText in documents.items()}
         for future in concurrent.futures.as_completed(futures):
             docID = futures[future]
             try:
-                documents[docID] = future.result()
+                stemmedDocuments[docID] = future.result()
             except Exception as exc:
                 print(f"Document {docID} generated an exception: {exc}")
-    return documents
+    return stemmedDocuments
 
 # Parses the document ID and text for the document
 def ParseDocument(document):
@@ -81,9 +81,9 @@ def __parseDocumentText(document: str) :
     pattern = '(?s)(?<=<TEXT>)(.*?)(?=</TEXT>)'
     return " ".join(re.findall(pattern, document))
 
-def __stemDocument(docID, docText):
+def __stemDocument(docText):
     docText = __stem(docText)
-    return docID, docText
+    return docText
 
 # Preprocess the given document i,e tokenize and remove stopwords
 def __preprocessDocument(docText, stopwords):
