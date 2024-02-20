@@ -2,6 +2,7 @@ from constants import Constants
 from fileio import write, currentOffset, seekFile
 from concurrent.futures import ThreadPoolExecutor,as_completed
 import ast
+
 # Generating inverted index for the documents
 # This stores the inverted index in the following format:
 # documentID -> {term -> [list of positions of the term in the document]}
@@ -10,24 +11,11 @@ import ast
 # Type denotes the type of the document, which can be stemmed or unstemmed
 def GenerateInvertedIndex(type, documents):
     #split the document into batches of 1000
-
-    partial_list_catalog = {}
-
-    def _processBatch(index, batch, type) :
-        invertedIndex = __generateInvertedIndex(batch)
-        for term in invertedIndex[Constants.TERM_INDEX]:
-            filename = 'inverted_index' + str(index) + '.txt'
-            startOffset = currentOffset(type, filename)
-            write(type, 'inverted_index' + str(index) + '.txt' , invertedIndex[Constants.TERM_INDEX][term])
-            endOffset = currentOffset(type, filename)
-            if term not in partial_list_catalog:
-                partial_list_catalog[term] = []
-            partial_list_catalog[term].append({'path' : type, 'filename' : filename, 'start' : startOffset, 'size' : endOffset - startOffset})
-
+    global catalog 
     total_batches = [dict(list(documents.items())[i:i+Constants.BATCH_SIZE]) for i in range(0, len(documents), Constants.BATCH_SIZE)]
     
     with ThreadPoolExecutor() as executor:
-        futures = {executor.submit(_processBatch, index, batch, type): (index, batch) for index, batch in enumerate(total_batches)}
+        futures = {executor.submit(__processBatch, index, batch, type): (index, batch) for index, batch in enumerate(total_batches)}
         for future in as_completed(futures):
             index, batch = futures[future]
             try:
@@ -35,21 +23,49 @@ def GenerateInvertedIndex(type, documents):
             except Exception as exc:
                 print(f"Processing failed for batch {index}: {exc}")
 
-    catalog = {}
-    for term in partial_list_catalog:
+    
+    main_index_file =  Constants.INDEX_FILE_NAME + '.txt'
+    for term in catalog:
         invertedIndexByTerm = {}
-        for index in range(0, len(partial_list_catalog[term])):
-            currentPartialList = partial_list_catalog[term][index]
+        for index in range(0, len(catalog[term])):
+            currentPartialList = catalog[term][index]
             data = seekFile(currentPartialList['path'], currentPartialList['filename'], currentPartialList['start'], currentPartialList['size'])
             partialIndexByTerm = ast.literal_eval(data)
             invertedIndexByTerm = __mergeInvertedIndexes(invertedIndexByTerm, partialIndexByTerm)
-        startOffset = currentOffset(type, 'inverted_index.txt')
-        write(type, 'inverted_index.txt', invertedIndexByTerm)
-        endOffset = currentOffset(type, 'inverted_index.txt')
-        catalog[term] = {'path' : type, 'filename' : 'inverted_index.txt', 'start' : startOffset, 'size' : endOffset - startOffset}
+        startOffset = currentOffset(type, main_index_file)
+        write(type, main_index_file, invertedIndexByTerm)
+        endOffset = currentOffset(type, main_index_file)
+        catalog[term] = {'path' : type, 'filename' : main_index_file, 'start' : startOffset, 'size' : endOffset - startOffset}
     
-    write(type, 'catalog.json', catalog)
+    write(type, Constants.CATALOG_FILE_NAME + '.txt', catalog)
     return catalog
+
+
+def __writePartialInvertedIndex(term, type, filename, invertedIndex):
+    startOffset = currentOffset(type, filename)
+    write(type, filename , invertedIndex[Constants.TERM_INDEX][term])
+    endOffset = currentOffset(type, filename)
+    return startOffset, endOffset - startOffset
+
+def __processBatch(index, batch, type) :
+        global catalog
+        invertedIndex = __generateInvertedIndex(batch)
+        partial_catalog = {}
+        for term in invertedIndex[Constants.TERM_INDEX]:
+            # Write the inverted index to the file
+            partial_index_filename = Constants.INDEX_FILE_NAME + str((index+1)) + '.txt'
+            startOffset, size = __writePartialInvertedIndex(term, type, partial_index_filename, invertedIndex)
+            
+            if term not in catalog:
+                catalog[term] = []
+            catalog[term].append({'path' : type, 'filename' : partial_index_filename, 'start' : startOffset, 'size' : size})
+            
+            if term not in partial_catalog:
+                partial_catalog[term] = []
+            partial_catalog[term].append({'path' : type, 'filename' : partial_index_filename, 'start' : startOffset, 'size' : size})
+        
+        partial_catalog_filename = Constants.CATALOG_FILE_NAME + str((index+1)) + '.txt'
+        write(type, partial_catalog_filename, partial_catalog)
 
 # Generate the inverted index for the given documents
 def __generateInvertedIndex(documents):
@@ -87,5 +103,6 @@ def __mergeInvertedIndexes(indexes, partial):
             indexes[document] = partial[document]
     return indexes
 
+catalog = {} # Catalog of the inverted index
 vocabulary = set() # Set of all unique terms in the corpus
 corpusSize = 0 # Total number of terms in the corpus

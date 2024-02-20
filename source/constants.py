@@ -5,6 +5,8 @@ class Constants:
     OUTPUT_PATH = '/Users/vanshitatilwani/Documents/Courses_Local/CS6200/hw2-vanshita-tilwani/output'
     INDEX_TYPE_STEMMED = 'stemmed'
     INDEX_TYPE_UNSTEMMED = 'unstemmed'
+    INDEX_FILE_NAME = 'inverted_index'
+    CATALOG_FILE_NAME = 'catalog'
     COMMA = ','
     APOSTROPHE = '\''
     PUNCTUATIONS = '.,!?;()[]\{\}<>/\|@#$%^&*-_+=~`"'
