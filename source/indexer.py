@@ -1,5 +1,6 @@
 from constants import Constants
-from fileio import write, currentOffset, seekFile, readFileAsJson
+from fileio import write, currentOffset, seekFile, readFileAsJson, Cleanup
+from util import PreprocessDocuments, StemData, TokenizeDocumentIds
 from concurrent.futures import ThreadPoolExecutor,as_completed
 
 # Generating inverted index for the documents
@@ -8,6 +9,15 @@ from concurrent.futures import ThreadPoolExecutor,as_completed
 # term -> {documentID -> [list of positions of the term in the document]}
 # DF = number of keys in the dictionary for a term, TTF = sum of the length of the list of positions for a term
 # Type denotes the type of the document, which can be stemmed or unstemmed
+def GenerateIndexes(documents, stopwords) :
+    doesUnstemmedIndexExists = IndexExists(Constants.INDEX_TYPE_UNSTEMMED)
+    doesStemmedIndexExists = IndexExists(Constants.INDEX_TYPE_STEMMED)
+    if(doesUnstemmedIndexExists and doesStemmedIndexExists) :
+        return __readInvertedIndex()
+    else :
+        return __generateIndex(doesUnstemmedIndexExists, doesStemmedIndexExists, documents, stopwords)
+
+# Indexes the documents and writes the inverted index to the file
 def index(type, documents) :
     catalog = {}
     if type == Constants.INDEX_TYPE_STEMMED or type == Constants.INDEX_TYPE_UNSTEMMED :
@@ -17,12 +27,19 @@ def index(type, documents) :
     print('Inverted index is generated for ' + type + ' documents')
     return catalog
 
+# Checks if the index exists for the type
 def IndexExists(type):
-    catalog = readFileAsJson(type)
+    catalog = readFileAsJson(type, Constants.CATALOG_FILE_NAME)
     if len(catalog) > 0:
         return True
     else:
         return False
+
+# Reads the inverted index from the file
+def TermVector(catalog, term):
+    catalog_data = catalog[term]
+    term_vector = seekFile(catalog_data['path'], catalog_data['filename'], catalog_data['start'], catalog_data['size'])
+    return term_vector
 
 # This function processes the documents in a batch and generates the inverted index for the batch and merges it to form main inverted index
 def __index(type, documents):
@@ -63,36 +80,32 @@ def __writePartialInvertedIndex(term, type, filename, invertedIndex):
     return startOffset, endOffset - startOffset
 
 # Prepares the inverted index and catalog for the given batch of 1000 documents
-def __processBatch(catalog, index, batch, type) :
-        
-        invertedIndex = __generateInvertedIndex(batch)
-        partial_catalog = {}
-        for term in invertedIndex:
-            # Write the inverted index to the file
-            partial_index_filename = Constants.INDEX_FILE_NAME + str((index+1)) + '.txt'
-            startOffset, size = __writePartialInvertedIndex(term, type, partial_index_filename, invertedIndex)
+def __processBatch(catalog, index, batch, type) : 
+    invertedIndex = __generateInvertedIndex(batch)
+    partial_catalog = {}
+    for term in invertedIndex:
+        # Write the inverted index to the file
+        partial_index_filename = Constants.INDEX_FILE_NAME + str((index+1)) + '.txt'
+        startOffset, size = __writePartialInvertedIndex(term, type, partial_index_filename, invertedIndex)
+        if term not in catalog:
+            catalog[term] = []
+        catalog[term].append({'path' : type, 'filename' : partial_index_filename, 'start' : startOffset, 'size' : size})
             
-            if term not in catalog:
-                catalog[term] = []
-            catalog[term].append({'path' : type, 'filename' : partial_index_filename, 'start' : startOffset, 'size' : size})
-            
-            if term not in partial_catalog:
-                partial_catalog[term] = []
-            partial_catalog[term].append({'path' : type, 'filename' : partial_index_filename, 'start' : startOffset, 'size' : size})
+        if term not in partial_catalog:
+            partial_catalog[term] = []
+        partial_catalog[term].append({'path' : type, 'filename' : partial_index_filename, 'start' : startOffset, 'size' : size})
         
-        partial_catalog_filename = Constants.CATALOG_FILE_NAME + str((index+1)) + '.json'
-        write(type, partial_catalog_filename, partial_catalog, False)
+    partial_catalog_filename = Constants.CATALOG_FILE_NAME + str((index+1)) + '.json'
+    write(type, partial_catalog_filename, partial_catalog, False)
 
 # Generate the inverted index for the given documents
 def __generateInvertedIndex(documents):
-    
     documentIndex = {}
     for documentID in documents:
         documentIndex[documentID] = {}
         for word in documents[documentID]:
             indices = [i for i, x in enumerate(documents[documentID]) if x == word]
             documentIndex[documentID][word] = indices
-    
     
     termIndex = {}
     for documentID in documentIndex:
@@ -111,4 +124,33 @@ def __mergeInvertedIndexes(indexes, partial):
             indexes[document].extend(partial[document])
         else:
             indexes[document] = partial[document]
+    return indexes
+
+# Reads the inverted index for both stemmed and unstemmed documents from the file
+def __readInvertedIndex() :
+    document_meta = readFileAsJson('config', Constants.DOCUMENT_MAPPING_FILE_NAME) 
+    document_mapping = {int(key):document_meta[key] for key in document_meta}
+    unstemmed_index = readFileAsJson(Constants.INDEX_TYPE_UNSTEMMED, Constants.CATALOG_FILE_NAME)
+    stemmed_index = readFileAsJson(Constants.INDEX_TYPE_STEMMED, Constants.CATALOG_FILE_NAME)
+    return document_mapping, unstemmed_index, stemmed_index
+
+# Preprocesses the documents and Generates the inverted index for stemmed and unstemmed documents
+def __generateIndex(doesUnstemmedIndexExists, doesStemmedIndexExists, documents, stopwords) :
+    document_mapping, tokenizedDocuments = TokenizeDocumentIds(documents)
+    processedDocuments = PreprocessDocuments(document_mapping, tokenizedDocuments, stopwords)
+    write('config', Constants.DOCUMENT_MAPPING_FILE_NAME + '.json', document_mapping, False)
+
+    unstemmed_index = __getInvertedIndex(doesUnstemmedIndexExists, Constants.INDEX_TYPE_UNSTEMMED, processedDocuments)
+    stemmed_index = __getInvertedIndex(doesStemmedIndexExists, Constants.INDEX_TYPE_STEMMED, processedDocuments)
+    return document_mapping, unstemmed_index, stemmed_index
+
+# Gets the inverted index for the given type (i.e. stemmed or unstemmed)
+def __getInvertedIndex(indexExists, type, documents) :
+    if indexExists:
+        indexes = readFileAsJson(type)
+    else :
+        Cleanup(type)
+        if type == Constants.INDEX_TYPE_STEMMED:
+            documents = StemData(documents)
+        indexes = index(type, documents)
     return indexes

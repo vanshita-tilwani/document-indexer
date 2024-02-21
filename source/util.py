@@ -30,12 +30,16 @@ def PreprocessDocuments(document_mapping, documents, stopwords):
             except Exception as exc:
                 print(f"Batch processing generated an exception: {exc}")
 
-    for key, value in processedDocuments.items():
-        document_mapping[key]['size'] = len(value)
+    __updateDocumentMapping(document_mapping, processedDocuments)
 
     return processedDocuments
 
-def StemDocuments(documents):
+def __updateDocumentMapping(document_mapping, processedDocuments):
+    for key, value in processedDocuments.items():
+        ttf = len(value)
+        document_mapping[key]['size'] = ttf
+
+def StemData(documents):
     stemmedDocuments = {}
     with ThreadPoolExecutor() as executor:
         futures = {executor.submit(__stemDocument, docText): docID for docID, docText in documents.items()}
@@ -93,8 +97,8 @@ def __parseDocumentText(document: str) :
     return " ".join(re.findall(pattern, document))
 
 def __stemDocument(docText):
-    docText = __stem(docText)
-    return docText
+    stemmedText = __stem(docText)
+    return stemmedText
 
 # Preprocess the given document i,e tokenize and remove stopwords
 def __preprocessText(docText, stopwords):
@@ -110,9 +114,10 @@ def __removeStopWords(docText, stopwords):
     return docText
 
 def __stem(words):
+    stemmedWords = []
     for i in range(len(words)):
-        words[i] = stemmer.stem(words[i])
-    return words
+        stemmedWords.append(stemmer.stem(words[i]))
+    return stemmedWords
 
 # Tokenize the given text
 def __tokenize(text) :
