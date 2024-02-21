@@ -35,6 +35,12 @@ def write(path, filename, data, replaceQuotes = True) :
             str = str.replace('"', '')
         f.write(str)
 
+def readQueries() :
+    with open(Constants.QUERY_PATH, 'r') as f:
+        content = f.read()
+        queries = content.split("\n")
+    return queries
+
 def readCatalog(path) :
     try :
         complete_filemane = Constants.OUTPUT_PATH + '/' + path + '/'  + Constants.CATALOG_FILE_NAME + '.json'

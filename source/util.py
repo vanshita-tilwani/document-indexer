@@ -4,6 +4,25 @@ import concurrent.futures
 import re
 from nltk.stem import PorterStemmer
 
+def ProcessQueries(queries, stopwords):
+    processedQueries = {}
+    query_dict = {}
+    for query in queries:
+        processedQuery = query.split("->")
+        query_dict[processedQuery[0]] = processedQuery[1]
+
+    with ThreadPoolExecutor() as executor:
+        # Process each query in a separate thread
+        futures = {executor.submit(__preprocessText, queryText, stopwords): queryId for queryId, queryText in queries.items()}
+        for future in as_completed(futures):
+            queryID = futures[future]
+            try:
+                processedQueries[queryID] = future.result()
+            except Exception as exc:
+                print(f"Query processing generated an exception: {exc}")
+
+    return processedQueries
+
 # Preprocess the documents i,e tokenize and remove stopwords
 def PreprocessDocuments(documents, stopwords):
     tokenizedDocuments = __tokenizeDocumentIds(documents)
@@ -51,7 +70,7 @@ def __processBatch(batch, stopwords):
         results = {}
         global document_mapping
         with ThreadPoolExecutor() as executor:
-            futures = {executor.submit(__preprocessDocument, docText, stopwords): docID for docID, docText in batch.items()}
+            futures = {executor.submit(__preprocessText, docText, stopwords): docID for docID, docText in batch.items()}
             for future in as_completed(futures):
                 docID = futures[future]
                 try:
@@ -86,7 +105,7 @@ def __stemDocument(docText):
     return docText
 
 # Preprocess the given document i,e tokenize and remove stopwords
-def __preprocessDocument(docText, stopwords):
+def __preprocessText(docText, stopwords):
     docText = __tokenize(docText)
     docText = __removeStopWords(docText, stopwords)
     return docText

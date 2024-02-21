@@ -3,7 +3,7 @@ class Constants:
     STOPWORDS_PATH = '/Users/vanshitatilwani/Documents/Courses_Local/CS6200/hw2-vanshita-tilwani/resources/stoplist.txt'
     RESOURCES_PATH = '/Users/vanshitatilwani/Documents/Courses_Local/CS6200/hw2-vanshita-tilwani/resources'
     OUTPUT_PATH = '/Users/vanshitatilwani/Documents/Courses_Local/CS6200/hw2-vanshita-tilwani/output'
-    QUERY_PATH = '/Users/vanshitatilwani/Documents/Courses_Local/hw1-vanshita-tilwani/resources/modified_queries.txt'
+    QUERY_PATH = '/Users/vanshitatilwani/Documents/Courses_Local/CS6200/hw2-vanshita-tilwani/resources/modified_queries.txt'
     INDEX_TYPE_STEMMED = 'stemmed'
     INDEX_TYPE_UNSTEMMED = 'unstemmed'
     INDEX_FILE_NAME = 'inverted_index'
