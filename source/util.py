@@ -4,16 +4,6 @@ import concurrent.futures
 import re
 from nltk.stem import PorterStemmer
 
-def TokenizeDocumentIds(documents):
-    tokenizedDocuments = {}
-    global document_mapping
-    for index, document in enumerate(documents.items()):
-        id = document[0]
-        text = document[1]
-        tokenizedDocuments[index] = text
-        document_mapping[index] = id
-    return document_mapping, tokenizedDocuments
-
 def ProcessQueries(queries, stopwords):
     processedQueries = {}
     for query in queries:
@@ -21,11 +11,10 @@ def ProcessQueries(queries, stopwords):
         id = int(processedQuery[0].strip())
         text = __preprocessText(processedQuery[1].strip(), stopwords)
         processedQueries[id] = text
-
     return processedQueries
 
 # Preprocess the documents i,e tokenize and remove stopwords
-def PreprocessDocuments(documents, stopwords):
+def PreprocessDocuments(document_mapping, documents, stopwords):
     # Split documents into batches of size batch_size
     total_batches = [dict(list(documents.items())[i:i+Constants.BATCH_SIZE]) for i in range(0, len(documents), Constants.BATCH_SIZE)]
 
@@ -40,6 +29,9 @@ def PreprocessDocuments(documents, stopwords):
                 processedDocuments.update(processedBatch)
             except Exception as exc:
                 print(f"Batch processing generated an exception: {exc}")
+
+    for key, value in processedDocuments.items():
+        document_mapping[key]['size'] = len(value)
 
     return processedDocuments
 
@@ -85,9 +77,9 @@ def TokenizeDocumentIds(documents):
     for index, document in enumerate(documents.items()):
         id = document[0]
         text = document[1]
-        tokenizedDocuments[index] = text
-        document_mapping[index] = id
-    return tokenizedDocuments
+        tokenizedDocuments[index+1] = text
+        document_mapping[index+1] = {'id': id}
+    return document_mapping, tokenizedDocuments
 
 
 # Parse the document ID from the document

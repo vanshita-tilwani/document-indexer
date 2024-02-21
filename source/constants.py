@@ -13,7 +13,7 @@ class Constants:
     INDEX_TYPE_UNSTEMMED = 'unstemmed'
     INDEX_FILE_NAME = 'inverted_index'
     CATALOG_FILE_NAME = 'catalog'
-    DOCUMENT_MAPPING_FILE_NAME = 'document_mapping.json'
+    DOCUMENT_MAPPING_FILE_NAME = 'document_mapping.txt'
     COMMA = ','
     APOSTROPHE = '\''
     PUNCTUATIONS = '.,!?;()[]\{\}<>/\|@#$%^&*-_+=~`"'

@@ -34,11 +34,11 @@ def __executeQueries(queries, models, document, index) :
 def __executeQuery(query, model, document, index) :
     retrieval_model = Model(model, index, query, document)
     retrieval_model.Execute()
-    print('Executing the query on specified model')
 
 # This function reads the documents from the file and generates the inverted index for the documents if it does not exist
 # If index already exists, it reads the catalog from the file for both stemmed and unstemmed documents
 def __generateIndexes(documents, stopwords) :
+    
     
     doesUnstemmedIndexExists = IndexExists(Constants.INDEX_TYPE_UNSTEMMED)
     doesStemmedIndexExists = IndexExists(Constants.INDEX_TYPE_STEMMED)
@@ -46,8 +46,8 @@ def __generateIndexes(documents, stopwords) :
         return readFileAsDictionary('config', Constants.DOCUMENT_MAPPING_FILE_NAME), readFileAsJson(Constants.INDEX_TYPE_UNSTEMMED), readFileAsJson(Constants.INDEX_TYPE_STEMMED)
     
     document_mapping, tokenizedDocuments = TokenizeDocumentIds(documents)
+    processedDocuments = PreprocessDocuments(document_mapping, tokenizedDocuments, stopwords)
     write('config', Constants.DOCUMENT_MAPPING_FILE_NAME, document_mapping)
-    processedDocuments = PreprocessDocuments(tokenizedDocuments, stopwords)
     unstemmed_index = __getInvertedIndex(doesUnstemmedIndexExists, Constants.INDEX_TYPE_UNSTEMMED, processedDocuments)
     stemmed_index = __getInvertedIndex(doesStemmedIndexExists, Constants.INDEX_TYPE_STEMMED, processedDocuments)
     return document_mapping, unstemmed_index, stemmed_index
