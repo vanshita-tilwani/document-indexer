@@ -4,30 +4,30 @@ import concurrent.futures
 import re
 from nltk.stem import PorterStemmer
 
+def TokenizeDocumentIds(documents):
+    tokenizedDocuments = {}
+    global document_mapping
+    for index, document in enumerate(documents.items()):
+        id = document[0]
+        text = document[1]
+        tokenizedDocuments[index] = text
+        document_mapping[index] = id
+    return document_mapping, tokenizedDocuments
+
 def ProcessQueries(queries, stopwords):
     processedQueries = {}
-    query_dict = {}
     for query in queries:
         processedQuery = query.split("->")
-        query_dict[processedQuery[0]] = processedQuery[1]
-
-    with ThreadPoolExecutor() as executor:
-        # Process each query in a separate thread
-        futures = {executor.submit(__preprocessText, queryText, stopwords): queryId for queryId, queryText in queries.items()}
-        for future in as_completed(futures):
-            queryID = futures[future]
-            try:
-                processedQueries[queryID] = future.result()
-            except Exception as exc:
-                print(f"Query processing generated an exception: {exc}")
+        id = int(processedQuery[0].strip())
+        text = __preprocessText(processedQuery[1].strip(), stopwords)
+        processedQueries[id] = text
 
     return processedQueries
 
 # Preprocess the documents i,e tokenize and remove stopwords
 def PreprocessDocuments(documents, stopwords):
-    tokenizedDocuments = __tokenizeDocumentIds(documents)
     # Split documents into batches of size batch_size
-    total_batches = [dict(list(tokenizedDocuments.items())[i:i+Constants.BATCH_SIZE]) for i in range(0, len(tokenizedDocuments), Constants.BATCH_SIZE)]
+    total_batches = [dict(list(documents.items())[i:i+Constants.BATCH_SIZE]) for i in range(0, len(documents), Constants.BATCH_SIZE)]
 
     # Preprocess documents in a batch
     processedDocuments = {}
@@ -79,7 +79,7 @@ def __processBatch(batch, stopwords):
                     print(f"Document {docID} generated an exception: {exc}")
         return results
 
-def __tokenizeDocumentIds(documents):
+def TokenizeDocumentIds(documents):
     tokenizedDocuments = {}
     global document_mapping
     for index, document in enumerate(documents.items()):

@@ -2,7 +2,7 @@ import os
 import json
 from concurrent.futures import ThreadPoolExecutor
 from constants import Constants
-from util import  ParseDocuments, ParseDocument
+from util import ParseDocuments, ParseDocument
 import ast
 
 # Read all the documents from the directory and preprocess the documents
@@ -41,12 +41,21 @@ def readQueries() :
         queries = content.split("\n")
     return queries
 
-def readCatalog(path) :
+def readFileAsJson(path) :
     try :
         complete_filemane = Constants.OUTPUT_PATH + '/' + path + '/'  + Constants.CATALOG_FILE_NAME + '.json'
         with open(complete_filemane, 'r') as f:
             data = f.read()
         return json.loads(data)
+    except FileNotFoundError:
+        return {}
+
+def readFileAsDictionary(path, filename) :
+    try :
+        complete_filemane = Constants.OUTPUT_PATH + '/' + path + '/'  + filename
+        with open(complete_filemane, 'r') as f:
+            data = f.read()
+        return ast.literal_eval(data)
     except FileNotFoundError:
         return {}
 

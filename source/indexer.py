@@ -1,5 +1,5 @@
 from constants import Constants
-from fileio import write, currentOffset, seekFile, readCatalog
+from fileio import write, currentOffset, seekFile, readFileAsJson
 from concurrent.futures import ThreadPoolExecutor,as_completed
 
 # Generating inverted index for the documents
@@ -18,7 +18,7 @@ def index(type, documents) :
     return catalog
 
 def IndexExists(type):
-    catalog = readCatalog(type)
+    catalog = readFileAsJson(type)
     if len(catalog) > 0:
         return True
     else:
