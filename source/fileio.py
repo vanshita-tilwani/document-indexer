@@ -5,16 +5,11 @@ from constants import Constants
 from util import  ParseDocuments, ParseDocument
 import ast
 
-def readDocument(filename) :
-    with open(os.path.join(Constants.DATA_PATH, filename), 'rb') as f:
-        content = f.read().decode("iso-8859-1")
-    return content
-
 # Read all the documents from the directory and preprocess the documents
 def readDocuments() : 
     documents = {}
     with ThreadPoolExecutor() as executor:
-        futures = {executor.submit(readDocument, filename): filename for filename in os.listdir(Constants.DATA_PATH)}
+        futures = {executor.submit(__readDocument, filename): filename for filename in os.listdir(Constants.DATA_PATH)}
         for future in futures:
             content = future.result()
             parsedContent = ParseDocuments(content)
@@ -62,3 +57,9 @@ def seekFile(path, filename, offset, length):
     with open(Constants.OUTPUT_PATH + '/' + path + '/'  + filename, 'r') as f:
         f.seek(offset)
         return ast.literal_eval(f.read(length))
+    
+
+def __readDocument(filename) :
+    with open(os.path.join(Constants.DATA_PATH, filename), 'rb') as f:
+        content = f.read().decode("iso-8859-1")
+    return content
