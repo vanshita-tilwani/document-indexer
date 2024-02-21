@@ -1,5 +1,5 @@
 from constants import Constants
-from fileio import write, currentOffset, seekFile, readFileAsJson, Cleanup
+from fileio import write, offset, seek, read, Cleanup
 from util import PreprocessDocuments, StemData, TokenizeDocumentIds
 from concurrent.futures import ThreadPoolExecutor,as_completed
 
@@ -29,7 +29,7 @@ def index(type, documents) :
 
 # Checks if the index exists for the type
 def IndexExists(type):
-    catalog = readFileAsJson(type, Constants.CATALOG_FILE_NAME)
+    catalog = read(type, Constants.CATALOG_FILE_NAME)
     if len(catalog) > 0:
         return True
     else:
@@ -38,7 +38,7 @@ def IndexExists(type):
 # Reads the inverted index from the file
 def TermVector(catalog, term):
     catalog_data = catalog[term]
-    term_vector = seekFile(catalog_data['path'], catalog_data['filename'], catalog_data['start'], catalog_data['size'])
+    term_vector = seek(catalog_data['path'], catalog_data['filename'], catalog_data['start'], catalog_data['size'])
     return term_vector
 
 # This function processes the documents in a batch and generates the inverted index for the batch and merges it to form main inverted index
@@ -62,11 +62,11 @@ def __index(type, documents):
         invertedIndexByTerm = {}
         for index in range(0, len(catalog[term])):
             currentPartialList = catalog[term][index]
-            partialIndexByTerm = seekFile(currentPartialList['path'], currentPartialList['filename'], currentPartialList['start'], currentPartialList['size'])
+            partialIndexByTerm = seek(currentPartialList['path'], currentPartialList['filename'], currentPartialList['start'], currentPartialList['size'])
             invertedIndexByTerm = __mergeInvertedIndexes(invertedIndexByTerm, partialIndexByTerm)
-        startOffset = currentOffset(type, main_index_file)
+        startOffset = offset(type, main_index_file)
         write(type, main_index_file, invertedIndexByTerm)
-        endOffset = currentOffset(type, main_index_file)
+        endOffset = offset(type, main_index_file)
         catalog[term] = {'path' : type, 'filename' : main_index_file, 'start' : startOffset, 'size' : endOffset - startOffset}
     
     write(type, Constants.CATALOG_FILE_NAME + '.json', catalog, False)
@@ -74,9 +74,9 @@ def __index(type, documents):
 
 # Write the inverted index to the file
 def __writePartialInvertedIndex(term, type, filename, invertedIndex):
-    startOffset = currentOffset(type, filename)
+    startOffset = offset(type, filename)
     write(type, filename , invertedIndex[term])
-    endOffset = currentOffset(type, filename)
+    endOffset = offset(type, filename)
     return startOffset, endOffset - startOffset
 
 # Prepares the inverted index and catalog for the given batch of 1000 documents
@@ -128,10 +128,10 @@ def __mergeInvertedIndexes(indexes, partial):
 
 # Reads the inverted index for both stemmed and unstemmed documents from the file
 def __readInvertedIndex() :
-    document_meta = readFileAsJson('config', Constants.DOCUMENT_MAPPING_FILE_NAME) 
+    document_meta = read('config', Constants.DOCUMENT_MAPPING_FILE_NAME) 
     document_mapping = {int(key):document_meta[key] for key in document_meta}
-    unstemmed_index = readFileAsJson(Constants.INDEX_TYPE_UNSTEMMED, Constants.CATALOG_FILE_NAME)
-    stemmed_index = readFileAsJson(Constants.INDEX_TYPE_STEMMED, Constants.CATALOG_FILE_NAME)
+    unstemmed_index = read(Constants.INDEX_TYPE_UNSTEMMED, Constants.CATALOG_FILE_NAME)
+    stemmed_index = read(Constants.INDEX_TYPE_STEMMED, Constants.CATALOG_FILE_NAME)
     return document_mapping, unstemmed_index, stemmed_index
 
 # Preprocesses the documents and Generates the inverted index for stemmed and unstemmed documents
@@ -147,7 +147,7 @@ def __generateIndex(doesUnstemmedIndexExists, doesStemmedIndexExists, documents,
 # Gets the inverted index for the given type (i.e. stemmed or unstemmed)
 def __getInvertedIndex(indexExists, type, documents) :
     if indexExists:
-        indexes = readFileAsJson(type)
+        indexes = read(type)
     else :
         Cleanup(type)
         if type == Constants.INDEX_TYPE_STEMMED:

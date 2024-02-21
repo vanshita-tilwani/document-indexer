@@ -28,6 +28,7 @@ def readStopwords() :
         names = content.split("\n")
     return names
 
+# Writing to the file as JSON
 def write(path, filename, data, replaceQuotes = True) :
     complete_filemane = Constants.OUTPUT_PATH + '/' + path + '/'  + filename
     with open(complete_filemane, 'a+') as f:
@@ -36,13 +37,15 @@ def write(path, filename, data, replaceQuotes = True) :
             str = str.replace('"', '')
         f.write(str)
 
+# Reading queries from the file
 def readQueries() :
     with open(Constants.QUERY_PATH, 'r') as f:
         content = f.read()
         queries = content.split("\n")
     return queries
 
-def readFileAsJson(path, filename) :
+# Reading the file as JSON
+def read(path, filename) :
     try :
         complete_filemane = Constants.OUTPUT_PATH + '/' + path + '/'  + filename + '.json'
         with open(complete_filemane, 'r') as f:
@@ -51,7 +54,8 @@ def readFileAsJson(path, filename) :
     except FileNotFoundError:
         return {}
 
-def currentOffset(path, filename):
+# Returns the current offset of the file
+def offset(path, filename):
     try:
         complete_filemane = Constants.OUTPUT_PATH + '/' + path + '/'  + filename
         with open(complete_filemane, 'r') as f:
@@ -60,11 +64,13 @@ def currentOffset(path, filename):
     except FileNotFoundError:
         return 0
 
-def seekFile(path, filename, offset, length):
+# Get data using the offset and length from the file
+def seek(path, filename, offset, length):
     with open(Constants.OUTPUT_PATH + '/' + path + '/'  + filename, 'r') as f:
         f.seek(offset)
         return ast.literal_eval(f.read(length))
     
+# Writing query execution result to file
 def WriteToResults(path, model, query, score, document_mapping):
     try:
         out = open(Constants.OUTPUT_PATH + '/' + path + '/' + model + '.txt', 'a')
@@ -74,6 +80,7 @@ def WriteToResults(path, model, query, score, document_mapping):
     except Exception as exception:
         print(exception)
 
+# Cleaning the index directory
 def Cleanup(type) :
     path = Constants.OUTPUT_PATH + '/' + type + '/*'
     files = glob.glob(path)
