@@ -10,17 +10,16 @@ from concurrent.futures import ThreadPoolExecutor,as_completed
 # DF = number of keys in the dictionary for a term, TTF = sum of the length of the list of positions for a term
 # Type denotes the type of the document, which can be stemmed or unstemmed
 def GenerateIndexes(documents, stopwords) :
-    userRegerateIndexes = __regenerateIndexes()
-    if(userRegerateIndexes):
-        return __generateIndex(False, False, documents, stopwords)
-    else:
-        doesUnstemmedIndexExists = IndexExists(Constants.INDEX_TYPE_UNSTEMMED)
-        doesStemmedIndexExists = IndexExists(Constants.INDEX_TYPE_STEMMED)
-        if(doesUnstemmedIndexExists and doesStemmedIndexExists) :
-            return __readInvertedIndex()
-        else :
+    doesUnstemmedIndexExists = IndexExists(Constants.INDEX_TYPE_UNSTEMMED)
+    doesStemmedIndexExists = IndexExists(Constants.INDEX_TYPE_STEMMED)
+    if(doesUnstemmedIndexExists and doesStemmedIndexExists) :
+        return __readInvertedIndex()
+    else :
+        userRegerateIndexes = __regenerateIndexes()
+        if(userRegerateIndexes):
+            return __generateIndex(False, False, documents, stopwords)
+        else:
             return __generateIndex(doesUnstemmedIndexExists, doesStemmedIndexExists, documents, stopwords)
-
 
 # Checks if the index exists for the type
 def IndexExists(type):
