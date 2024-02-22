@@ -1,7 +1,8 @@
 from constants import Constants
-from fileio import write, offset, seek, read, Cleanup
+from fileio import write, offset, seek, read, Cleanup, writeToBinary
 from util import PreprocessDocuments, StemData, TokenizeDocumentIds
 from concurrent.futures import ThreadPoolExecutor,as_completed
+import pickle
 
 # Generating inverted index for the documents
 # This stores the inverted index in the following format:
@@ -23,8 +24,11 @@ def GenerateIndexes(documents, stopwords) :
 
 # Checks if the index exists for the type
 def IndexExists(type):
-    catalog = read(type, Constants.CATALOG_FILE_NAME)
-    if len(catalog) > 0:
+    decompressed_path = type + '/' + Constants.DECOMPRESSED_INDEX
+    compressed_path = type + '/' + Constants.COMPRESSED_INDEX
+    decompressed_catalog = read(decompressed_path, Constants.CATALOG_FILE_NAME)
+    compressed_catalog = read(compressed_path, Constants.CATALOG_FILE_NAME)
+    if len(decompressed_catalog) > 0 and len(compressed_catalog) > 0:
         return True
     else:
         return False
@@ -50,22 +54,44 @@ def __index(type, documents):
             except Exception as exc:
                 print(f"Processing failed for batch {index}: {exc}")
 
+    decompressed_index, compressed_index = __mergeToFormIndexes(type, catalog)
+    return decompressed_index, compressed_index
 
-    main_index_file =  Constants.INDEX_FILE_NAME + '.txt'
-    for term in catalog:
-        invertedIndexByTerm = {}
-        for index in range(0, len(catalog[term])):
-            currentPartialList = catalog[term][index]
-            partialIndexByTerm = seek(currentPartialList['path'], currentPartialList['filename'], currentPartialList['start'], currentPartialList['size'])
-            invertedIndexByTerm = __mergeInvertedIndexes(invertedIndexByTerm, partialIndexByTerm)
-        startOffset = offset(type, main_index_file)
-        write(type, main_index_file, invertedIndexByTerm)
-        endOffset = offset(type, main_index_file)
-        catalog[term] = {'path' : type, 'filename' : main_index_file, 'start' : startOffset, 'size' : endOffset - startOffset}
+def __mergeToFormIndexes(type, catalog) :
+    decompressed_catalog = {}
+    compressed_catalog = {}
+
+    decompressed_main_index_file =  Constants.INDEX_FILE_NAME + '.txt'
+    compressed_main_index_file = Constants.INDEX_FILE_NAME + '.pickle'
+
+    decompressed_index_path = type + '/' + Constants.DECOMPRESSED_INDEX
+    compressed_index_path = type + '/' + Constants.COMPRESSED_INDEX
     
-    write(type, Constants.CATALOG_FILE_NAME + '.json', catalog, False)
-    return catalog
+    for term in catalog:
+        invertedIndexByTerm = __getMergedInvertedIndexForTerm(catalog, term)
+        # Writing to Decompressed Index
+        startOffset = offset(decompressed_index_path, decompressed_main_index_file)
+        write(decompressed_index_path, decompressed_main_index_file, invertedIndexByTerm)
+        endOffset = offset(decompressed_index_path, decompressed_main_index_file)
+        decompressed_catalog[term] = {'path' : decompressed_index_path, 'filename' : decompressed_main_index_file, 'start' : startOffset, 'size' : endOffset - startOffset}
 
+        # Writing to Compressed Index
+        start = offset(compressed_index_path, compressed_main_index_file)
+        write(compressed_index_path, compressed_main_index_file, invertedIndexByTerm)
+        end = offset(compressed_index_path, compressed_main_index_file)
+        compressed_catalog[term] = {'path' : compressed_index_path, 'filename' : compressed_main_index_file, 'start' : start, 'size' : end - start}
+
+    write(decompressed_index_path, Constants.CATALOG_FILE_NAME + '.json', decompressed_catalog, False)
+    write(compressed_index_path, compressed_catalog)
+    return decompressed_catalog, compressed_catalog
+
+def __getMergedInvertedIndexForTerm(catalog, term) :
+    for index in range(0, len(catalog[term])):
+        currentPartialList = catalog[term][index]
+        partialIndexByTerm = seek(currentPartialList['path'], currentPartialList['filename'], currentPartialList['start'], currentPartialList['size'])
+        invertedIndexByTerm = __mergeInvertedIndexes(invertedIndexByTerm, partialIndexByTerm)
+    return invertedIndexByTerm
+        
 # Write the inverted index to the file
 def __writePartialInvertedIndex(term, type, filename, invertedIndex):
     startOffset = offset(type, filename)
@@ -134,30 +160,28 @@ def __generateIndex(doesUnstemmedIndexExists, doesStemmedIndexExists, documents,
     processedDocuments = PreprocessDocuments(document_mapping, tokenizedDocuments, stopwords)
     write('config', Constants.DOCUMENT_MAPPING_FILE_NAME + '.json', document_mapping, False)
 
-    unstemmed_index = __getInvertedIndex(doesUnstemmedIndexExists, Constants.INDEX_TYPE_UNSTEMMED, processedDocuments)
-    stemmed_index = __getInvertedIndex(doesStemmedIndexExists, Constants.INDEX_TYPE_STEMMED, processedDocuments)
-    return document_mapping, unstemmed_index, stemmed_index
+    unstemmed_index_decompressed, unstemmed_index_compressed = __getInvertedIndex(doesUnstemmedIndexExists, Constants.INDEX_TYPE_UNSTEMMED, processedDocuments)
+    stemmed_index_decompressed, stemmed_index_compressed = __getInvertedIndex(doesStemmedIndexExists, Constants.INDEX_TYPE_STEMMED, processedDocuments)
+    # TODO : send all compressed and decompressed indexes
+    return document_mapping, unstemmed_index_decompressed, stemmed_index_decompressed
 
 # Gets the inverted index for the given type (i.e. stemmed or unstemmed)
 def __getInvertedIndex(indexExists, type, documents) :
     if indexExists:
-        indexes = read(type)
+        return read(type)
     else :
         Cleanup(type)
         if type == Constants.INDEX_TYPE_STEMMED:
             documents = StemData(documents)
-        indexes = __indexDocuments(type, documents)
-    return indexes
+        return __indexDocuments(type, documents)
 
 # Indexes the documents and writes the inverted index to the file
 def __indexDocuments(type, documents) :
     catalog = {}
     if type == Constants.INDEX_TYPE_STEMMED or type == Constants.INDEX_TYPE_UNSTEMMED :
-        catalog = __index(type, documents)
+        return __index(type, documents)
     else :
         raise ValueError('Invalid index type')
-    print('Inverted index is generated for ' + type + ' documents')
-    return catalog
 
 def __regenerateIndexes() :
     answer = input('Do you wish to re-generate indexes? [yes/no]')

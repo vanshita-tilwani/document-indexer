@@ -5,6 +5,7 @@ from constants import Constants
 from util import ParseDocuments, ParseDocument
 import ast
 import glob
+import pickle
 
 # Read all the documents from the directory and preprocess the documents
 def readDocuments() : 
@@ -36,6 +37,11 @@ def write(path, filename, data, replaceQuotes = True) :
         if replaceQuotes:
             str = str.replace('"', '')
         f.write(str)
+
+def writeToBinary(path, filename, data):
+    complete_filemane = Constants.OUTPUT_PATH + '/' + path + '/'  + filename
+    with open(complete_filemane, 'ab+') as f:
+        f.write(pickle.dumps(data))
 
 # Reading queries from the file
 def readQueries() :
