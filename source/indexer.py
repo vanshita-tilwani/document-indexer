@@ -10,22 +10,17 @@ from concurrent.futures import ThreadPoolExecutor,as_completed
 # DF = number of keys in the dictionary for a term, TTF = sum of the length of the list of positions for a term
 # Type denotes the type of the document, which can be stemmed or unstemmed
 def GenerateIndexes(documents, stopwords) :
-    doesUnstemmedIndexExists = IndexExists(Constants.INDEX_TYPE_UNSTEMMED)
-    doesStemmedIndexExists = IndexExists(Constants.INDEX_TYPE_STEMMED)
-    if(doesUnstemmedIndexExists and doesStemmedIndexExists) :
-        return __readInvertedIndex()
-    else :
-        return __generateIndex(doesUnstemmedIndexExists, doesStemmedIndexExists, documents, stopwords)
+    userRegerateIndexes = __regenerateIndexes()
+    if(userRegerateIndexes):
+        return __generateIndex(False, False, documents, stopwords)
+    else:
+        doesUnstemmedIndexExists = IndexExists(Constants.INDEX_TYPE_UNSTEMMED)
+        doesStemmedIndexExists = IndexExists(Constants.INDEX_TYPE_STEMMED)
+        if(doesUnstemmedIndexExists and doesStemmedIndexExists) :
+            return __readInvertedIndex()
+        else :
+            return __generateIndex(doesUnstemmedIndexExists, doesStemmedIndexExists, documents, stopwords)
 
-# Indexes the documents and writes the inverted index to the file
-def index(type, documents) :
-    catalog = {}
-    if type == Constants.INDEX_TYPE_STEMMED or type == Constants.INDEX_TYPE_UNSTEMMED :
-        catalog = __index(type, documents)
-    else :
-        raise ValueError('Invalid index type')
-    print('Inverted index is generated for ' + type + ' documents')
-    return catalog
 
 # Checks if the index exists for the type
 def IndexExists(type):
@@ -56,7 +51,7 @@ def __index(type, documents):
             except Exception as exc:
                 print(f"Processing failed for batch {index}: {exc}")
 
-    
+
     main_index_file =  Constants.INDEX_FILE_NAME + '.txt'
     for term in catalog:
         invertedIndexByTerm = {}
@@ -152,5 +147,22 @@ def __getInvertedIndex(indexExists, type, documents) :
         Cleanup(type)
         if type == Constants.INDEX_TYPE_STEMMED:
             documents = StemData(documents)
-        indexes = index(type, documents)
+        indexes = __indexDocuments(type, documents)
     return indexes
+
+# Indexes the documents and writes the inverted index to the file
+def __indexDocuments(type, documents) :
+    catalog = {}
+    if type == Constants.INDEX_TYPE_STEMMED or type == Constants.INDEX_TYPE_UNSTEMMED :
+        catalog = __index(type, documents)
+    else :
+        raise ValueError('Invalid index type')
+    print('Inverted index is generated for ' + type + ' documents')
+    return catalog
+
+def __regenerateIndexes() :
+    answer = input('Do you wish to re-generate indexes? [yes/no]')
+    if answer.lower() == 'yes' or answer.lower() == 'y':
+        return True
+    else:
+        return False
