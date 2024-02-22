@@ -13,13 +13,13 @@ def GenerateIndexes(documents, stopwords) :
     doesUnstemmedIndexExists = IndexExists(Constants.INDEX_TYPE_UNSTEMMED)
     doesStemmedIndexExists = IndexExists(Constants.INDEX_TYPE_STEMMED)
     if(doesUnstemmedIndexExists and doesStemmedIndexExists) :
-        return __readInvertedIndex()
-    else :
         userRegerateIndexes = __regenerateIndexes()
         if(userRegerateIndexes):
             return __generateIndex(False, False, documents, stopwords)
         else:
-            return __generateIndex(doesUnstemmedIndexExists, doesStemmedIndexExists, documents, stopwords)
+            return __readInvertedIndex()
+    else :
+        return __generateIndex(doesUnstemmedIndexExists, doesStemmedIndexExists, documents, stopwords)
 
 # Checks if the index exists for the type
 def IndexExists(type):
