@@ -82,8 +82,12 @@ def WriteToResults(path, model, query, score, document_mapping):
 
 # Cleaning the index directory
 def Cleanup(type) :
-    path = Constants.OUTPUT_PATH + '/' + type + '/*'
-    files = glob.glob(path)
+    catalog_files = Constants.OUTPUT_PATH + '/' + type + '/catalog*'
+    inverted_index = Constants.OUTPUT_PATH + '/' + type + '/inverted_index*'
+    files = glob.glob(catalog_files)
+    for f in files:
+        os.remove(f)
+    files = glob.glob(inverted_index)
     for f in files:
         os.remove(f)
 

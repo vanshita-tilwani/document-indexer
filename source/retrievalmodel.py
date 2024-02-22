@@ -9,7 +9,7 @@ class Model() :
         self.documents = documents
         self.corpus_size = self.__corpusSize()
         self.total_term_frequency = {}
-
+        
     def SetModel(self, model):
         self.model = model
     
@@ -17,9 +17,33 @@ class Model() :
         self.query = query
 
     def Execute(self):
-        result = self.__executeQueryForModel()
+        if (self.model == Constants.PROXIMITY_SEARCH):
+            result = self.__executeProximitySearch()
+        else:
+            result = self.__executeQueryForModel()
         orderedResult = OrderedDict(sorted(result.items(), key=lambda x: x[1]))
         scores = list(orderedResult.items())[::-1][:1000]
+        return scores
+            
+    def __executeProximitySearch(self) :
+        self.SetModel(Constants.BM_25)
+        scores = self.__executeQueryForModel()
+        info = {}
+        for word in self.query :
+            term_vector = TermVector(self.index, word)
+            # If term exists in corpus, i.e. it exits in any of the document
+            for doc, pos in term_vector.items():
+                if doc in info:
+                    info[doc][word] = pos
+                else:
+                    info[doc] = {word : pos}
+        
+        for doc, words in info.items():
+            for word, pos in words.items():
+                tf = len(pos)
+                curr_acc = self.__accscore(len(self.documents), word, words)
+                prox_score = self.__proximityscore(len(self.documents), tf, curr_acc, self.documents[doc]['size'], self.__averageLength())
+                scores[doc] += prox_score
         return scores
     
     def __executeQueryForModel(self):
@@ -118,6 +142,51 @@ class Model() :
         score = (1-Constants.CORPUS_PROB)*(ttf/(total_length - length))
         return math.log(score)
 
+    def __proximityscore(self, num_docs, tf, acc_t, len_d, avg_doc_len):
+        ief = self.__iefscore(num_docs, tf)
+        calc2 = (acc_t * (Constants.PROX_SEARCH_K1+1)) / (acc_t + (Constants.PROX_SEARCH_K1 * ((1-Constants.PROX_SEARCH_B) + (Constants.PROX_SEARCH_B * (len_d/avg_doc_len)))) ) 
+        prox = min(ief, 1) * calc2
+        return prox
+    
+    def __accscore(self, td, wrd, w_positions_dict) :
+        curr_positions = w_positions_dict.get(wrd)
+        acc = 0
+        for w, p in w_positions_dict.items():
+            if w == wrd:
+                continue
+        p1 = 0
+        p2 = 0
+        term_j_pos = p
+        while (p1 < len(curr_positions) and p2 < len(term_j_pos)):
+            window = abs(int(curr_positions[p1]) - int(term_j_pos[p2]))
+            if window <= Constants.PROX_SEARCH:
+                # log(total_docs - tf + 0.5 / tf + 1) / d^2
+                tf = len(term_j_pos)
+                temp_acc = self.__iefscore(td, tf) / Constants.PROX_SEARCH_D**2
+                acc += temp_acc
+            if int(curr_positions[p1]) < int(term_j_pos[p2]):
+                p1 += 1
+            else:
+                p2 += 1
+        while (p1 < len(curr_positions)):
+            window = abs(int(curr_positions[p1]) - int(term_j_pos[p2-1])) # may need to do p2 -1 or else out of range
+            if window <= Constants.PROX_SEARCH:
+                tf = len(term_j_pos)
+                temp_acc = self.__iefscore(td, tf) / Constants.PROX_SEARCH**2
+                acc += temp_acc
+            p1 += 1
+        while (p2 < len(term_j_pos)):
+            window = abs(int(curr_positions[p1-1]) - int(term_j_pos[p2]))
+            if window <= Constants.PROX_SEARCH:
+                tf = len(term_j_pos)
+                temp_acc = self.__iefscore(td, tf) / Constants.PROX_SEARCH**2
+                acc += temp_acc
+            p2 += 1
+        return acc
+    
+    def __iefscore(self, n, term_freq):
+        return math.log( (n - (term_freq) + 1) / (term_freq + 0.5), 2)
+    
     def __totalTermFrequency(self, word, term_vector):
         if word in self.total_term_frequency:
             return self.total_term_frequency[word]

@@ -11,6 +11,7 @@ def __main__() :
     stopwords = readStopwords()
     # Reading the indexes if already exists, if the indexes are not present then generating new indexes
     document_mapping, unstemmed_index, stemmed_index = GenerateIndexes(documents, stopwords)
+    print('Inverted index is generated for both stemmed and unstemmed documents')
 
     # Reading queries from the resources
     queries = readQueries()
@@ -19,13 +20,16 @@ def __main__() :
     # Stemming the queries
     stemmedQueries = StemData(processedQueries)
 
+    print('Queries are processed and ready to be used for running on each model')
     # Models to run retrieval models on
-    models = [Constants.TF_IDF, Constants.BM_25, Constants.LM_JELINEKMERCER]
+    models = [Constants.OKAPI_TF, Constants.TF_IDF, Constants.BM_25, Constants.LM_JELINEKMERCER, Constants.LM_LAPLACE, Constants.PROXIMITY_SEARCH]
     # Executing Queries for the models on unstemmed index
     __executeQueries(Constants.INDEX_TYPE_UNSTEMMED, processedQueries, models, document_mapping, unstemmed_index)
     # Executing Queries for the models on stemmed index
     __executeQueries(Constants.INDEX_TYPE_STEMMED, stemmedQueries, models, document_mapping, stemmed_index)
-    print('Inverted index is generated for both stemmed and unstemmed documents')
+    
+    print('The results for each of the model is generated in the output directory')
+    
 
 def __executeQueries(index_type, queries, models, document_mapping, index) :
     # Deleting result file before running queries

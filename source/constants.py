@@ -9,11 +9,17 @@ class Constants:
     BM_25 = 'model_bm25'
     LM_LAPLACE = 'model_lm_laplace'
     LM_JELINEKMERCER = 'model_lm_jk'
+    PROXIMITY_SEARCH = 'model_proximity_search'
+    COMPRESSED_INDEX = 'compressed_index'
+    DECOMPRESSED_INDEX = 'decompressed_index'
     BM25_K1 = 1.2
     BM25_B = 0.75
     BM25_K2 = 0
     CORPUS_PROB = 0.99
-    
+    PROX_SEARCH_K1 = 1.5
+    PROX_SEARCH_K2 = 1.2
+    PROX_SEARCH_B = 0.4
+    PROX_SEARCH_D = 2
     INDEX_TYPE_STEMMED = 'stemmed'
     INDEX_TYPE_UNSTEMMED = 'unstemmed'
     INDEX_FILE_NAME = 'inverted_index'
