@@ -5,7 +5,7 @@ from constants import Constants
 from util import ParseDocuments, ParseDocument
 import ast
 import glob
-import pickle
+import zlib
 
 # Read all the documents from the directory and preprocess the documents
 def readDocuments() : 
@@ -41,7 +41,8 @@ def write(path, filename, data, replaceQuotes = True) :
 def writeToBinary(path, filename, data):
     complete_filemane = Constants.OUTPUT_PATH + '/' + path + '/'  + filename
     with open(complete_filemane, 'ab+') as f:
-        bytes_data = pickle.dumps(data, protocol=pickle.HIGHEST_PROTOCOL)
+        final_string_data = json.dumps(data, separators=(',', ':'), indent=None).replace('"', '')
+        bytes_data = zlib.compress(final_string_data.encode())
         f.write(bytes_data)
 
 # Reading queries from the file
@@ -81,7 +82,8 @@ def seekBinary(path, filename, offset, length):
     with open(Constants.OUTPUT_PATH + '/' + path + '/'  + filename, 'rb') as f:
         f.seek(offset)
         data = f.read(length)
-        return pickle.loads(data)
+        string_data = zlib.decompress(data).decode()
+        return ast.literal_eval(string_data)
     
 # Writing query execution result to file
 def WriteToResults(path, model, query, score, document_mapping):
