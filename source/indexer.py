@@ -33,12 +33,15 @@ def IndexExists(type):
 
 # Reads the inverted index from the file
 def TermVector(index_type, catalog, term):
-    catalog_data = catalog[term]
-    if(index_type ==  Constants.DECOMPRESSED_INDEX):
-        term_vector = seek(catalog_data['path'], catalog_data['filename'], catalog_data['start'], catalog_data['size'])
+    if(term in catalog):
+        catalog_data = catalog[term]
+        if(index_type ==  Constants.DECOMPRESSED_INDEX):
+            term_vector = seek(catalog_data['path'], catalog_data['filename'], catalog_data['start'], catalog_data['size'])
+        else:
+            term_vector = seekBinary(catalog_data['path'], catalog_data['filename'], catalog_data['start'], catalog_data['size'])
+        return term_vector
     else:
-        term_vector = seekBinary(catalog_data['path'], catalog_data['filename'], catalog_data['start'], catalog_data['size'])
-    return term_vector
+        return {}
 
 # This function processes the documents in a batch and generates the inverted index for the batch and merges it to form main inverted index
 def __index(type, documents):

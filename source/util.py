@@ -7,10 +7,11 @@ from nltk.stem import PorterStemmer
 def ProcessQueries(queries, stopwords):
     processedQueries = {}
     for query in queries:
-        processedQuery = query.split("->")
-        id = int(processedQuery[0].strip())
-        text = __preprocessText(processedQuery[1].strip(), stopwords)
-        processedQueries[id] = text
+        if(query != ''):
+            processedQuery = query.split("->")
+            id = int(processedQuery[0].strip())
+            text = __preprocessText(processedQuery[1].strip(), stopwords)
+            processedQueries[id] = text
     return processedQueries
 
 # Preprocess the documents i,e tokenize and remove stopwords

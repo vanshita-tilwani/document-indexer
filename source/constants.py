@@ -1,9 +1,9 @@
 class Constants:
     DATA_PATH = '/Users/vanshitatilwani/Documents/Courses_Local/CS6200/hw2-vanshita-tilwani/IR_data/AP_DATA/ap89_collection'
-    STOPWORDS_PATH = '/Users/vanshitatilwani/Documents/Courses_Local/CS6200/hw2-vanshita-tilwani/resources/stoplist.txt'
+    STOPWORDS_PATH = '/Users/vanshitatilwani/Documents/Courses_Local/CS6200/hw2-vanshita-tilwani/resources/stoplist_hw1.txt'
     RESOURCES_PATH = '/Users/vanshitatilwani/Documents/Courses_Local/CS6200/hw2-vanshita-tilwani/resources'
     OUTPUT_PATH = '/Users/vanshitatilwani/Documents/Courses_Local/CS6200/hw2-vanshita-tilwani/output'
-    QUERY_PATH = '/Users/vanshitatilwani/Documents/Courses_Local/CS6200/hw2-vanshita-tilwani/resources/modified_queries.txt'
+    QUERY_PATH = '/Users/vanshitatilwani/Documents/Courses_Local/CS6200/hw2-vanshita-tilwani/resources/queries_hw1.txt'
     OKAPI_TF = 'model_okapi_tf'
     TF_IDF = 'model_tfidf'
     BM_25 = 'model_bm25'
