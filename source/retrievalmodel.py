@@ -4,8 +4,9 @@ from indexer import TermVector
 import math
 
 class Model() :
-    def __init__(self, index, documents):
+    def __init__(self, index_type, index, documents):
         self.index = index
+        self.index_type = index_type
         self.documents = documents
         self.corpus_size = self.__corpusSize()
         self.total_term_frequency = {}
@@ -30,7 +31,7 @@ class Model() :
         scores = self.__executeQueryForModel()
         info = {}
         for word in self.query :
-            term_vector = TermVector(self.index, word)
+            term_vector = TermVector(self.index_type, self.index, word)
             # If term exists in corpus, i.e. it exits in any of the document
             for doc, pos in term_vector.items():
                 if doc in info:
@@ -49,7 +50,7 @@ class Model() :
     def __executeQueryForModel(self):
         scores = OrderedDict()
         for word in self.query:
-            term_vector = TermVector(self.index, word)
+            term_vector = TermVector(self.index_type, self.index, word)
             for id in self.documents:
                 if id in term_vector:
                     score = self.__score(word, term_vector, id, self.query.count(word))

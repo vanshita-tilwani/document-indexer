@@ -38,10 +38,14 @@ def write(path, filename, data, replaceQuotes = True) :
             str = str.replace('"', '')
         f.write(str)
 
-def writeToBinary(path, filename, data):
+def writeToBinary(path, filename, data, replaceQuotes = True):
     complete_filemane = Constants.OUTPUT_PATH + '/' + path + '/'  + filename
     with open(complete_filemane, 'ab+') as f:
-        f.write(pickle.dumps(data))
+        str = json.dumps(data, separators=(',', ':'), indent=None)
+        if replaceQuotes:
+            str = str.replace('"', '')
+        data_bytes = pickle.dumps(str)
+        f.write(data_bytes)
 
 # Reading queries from the file
 def readQueries() :
@@ -75,6 +79,12 @@ def seek(path, filename, offset, length):
     with open(Constants.OUTPUT_PATH + '/' + path + '/'  + filename, 'r') as f:
         f.seek(offset)
         return ast.literal_eval(f.read(length))
+
+def seekBinary(path, filename, offset, length):
+    with open(Constants.OUTPUT_PATH + '/' + path + '/'  + filename, 'rb') as f:
+        f.seek(offset)
+        str = pickle.loads(f.read(length))
+        return ast.literal_eval(str)
     
 # Writing query execution result to file
 def WriteToResults(path, model, query, score, document_mapping):
