@@ -24,10 +24,8 @@ def GenerateIndexes(documents, stopwords) :
 
 # Checks if the index exists for the type
 def IndexExists(type):
-    decompressed_path = type + '/' + Constants.DECOMPRESSED_INDEX
-    compressed_path = type + '/' + Constants.COMPRESSED_INDEX
-    decompressed_catalog = read(decompressed_path, Constants.CATALOG_FILE_NAME)
-    compressed_catalog = read(compressed_path, Constants.CATALOG_FILE_NAME)
+    decompressed_catalog = __getCatalog(type, Constants.DECOMPRESSED_INDEX)
+    compressed_catalog = __getCatalog(type, Constants.COMPRESSED_INDEX)
     if len(decompressed_catalog) > 0 and len(compressed_catalog) > 0:
         return True
     else:
@@ -65,7 +63,7 @@ def __mergeToFormIndexes(type, catalog) :
     compressed_catalog = {}
 
     decompressed_main_index_file =  Constants.INDEX_FILE_NAME + '.txt'
-    compressed_main_index_file = Constants.INDEX_FILE_NAME + '.pickle'
+    compressed_main_index_file = Constants.INDEX_FILE_NAME + '.txt'
 
     decompressed_index_path = type + '/' + Constants.DECOMPRESSED_INDEX
     compressed_index_path = type + '/' + Constants.COMPRESSED_INDEX
@@ -154,9 +152,12 @@ def __mergeInvertedIndexes(indexes, partial):
 def __readInvertedIndex() :
     document_meta = read('config', Constants.DOCUMENT_MAPPING_FILE_NAME) 
     document_mapping = {int(key):document_meta[key] for key in document_meta}
-    unstemmed_index = read(Constants.INDEX_TYPE_UNSTEMMED, Constants.CATALOG_FILE_NAME)
-    stemmed_index = read(Constants.INDEX_TYPE_STEMMED, Constants.CATALOG_FILE_NAME)
-    return document_mapping, unstemmed_index, stemmed_index
+    unstemmed_decompressed_index = __getCatalog(Constants.INDEX_TYPE_UNSTEMMED, Constants.DECOMPRESSED_INDEX)
+    unstemmed_compressed_index = __getCatalog(Constants.INDEX_TYPE_UNSTEMMED, Constants.COMPRESSED_INDEX)
+    stemmed_decompressed_index = __getCatalog(Constants.INDEX_TYPE_STEMMED, Constants.DECOMPRESSED_INDEX)
+    stemmed_compressed_index = __getCatalog(Constants.INDEX_TYPE_STEMMED, Constants.COMPRESSED_INDEX)
+    
+    return document_mapping, unstemmed_decompressed_index, unstemmed_compressed_index, stemmed_decompressed_index,stemmed_compressed_index
 
 # Preprocesses the documents and Generates the inverted index for stemmed and unstemmed documents
 def __generateIndex(doesUnstemmedIndexExists, doesStemmedIndexExists, documents, stopwords) :
@@ -164,15 +165,17 @@ def __generateIndex(doesUnstemmedIndexExists, doesStemmedIndexExists, documents,
     processedDocuments = PreprocessDocuments(document_mapping, tokenizedDocuments, stopwords)
     write('config', Constants.DOCUMENT_MAPPING_FILE_NAME + '.json', document_mapping, False)
 
-    unstemmed_index_decompressed, unstemmed_index_compressed = __getInvertedIndex(doesUnstemmedIndexExists, Constants.INDEX_TYPE_UNSTEMMED, processedDocuments)
     stemmed_index_decompressed, stemmed_index_compressed = __getInvertedIndex(doesStemmedIndexExists, Constants.INDEX_TYPE_STEMMED, processedDocuments)
+    unstemmed_index_decompressed, unstemmed_index_compressed = __getInvertedIndex(doesUnstemmedIndexExists, Constants.INDEX_TYPE_UNSTEMMED, processedDocuments)
     # TODO : send all compressed and decompressed indexes
-    return document_mapping, unstemmed_index_decompressed, stemmed_index_decompressed
+    return document_mapping, unstemmed_index_decompressed, unstemmed_index_compressed, stemmed_index_decompressed, stemmed_index_compressed
 
 # Gets the inverted index for the given type (i.e. stemmed or unstemmed)
 def __getInvertedIndex(indexExists, type, documents) :
     if indexExists:
-        return read(type)
+        decompressed_catalog = __getCatalog(type, Constants.DECOMPRESSED_INDEX)
+        compressed_catalog = __getCatalog(type, Constants.COMPRESSED_INDEX)
+        return decompressed_catalog, compressed_catalog
     else :
         Cleanup(type)
         if type == Constants.INDEX_TYPE_STEMMED:
@@ -185,3 +188,6 @@ def __regenerateIndexes() :
         return True
     else:
         return False
+    
+def __getCatalog(index_type, index_size):
+    return read(index_type + '/' + index_size, Constants.CATALOG_FILE_NAME)

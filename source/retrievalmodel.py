@@ -160,7 +160,7 @@ class Model() :
         term_j_pos = p
         while (p1 < len(curr_positions) and p2 < len(term_j_pos)):
             window = abs(int(curr_positions[p1]) - int(term_j_pos[p2]))
-            if window <= Constants.PROX_SEARCH:
+            if window <= Constants.PROX_SEARCH_D:
                 # log(total_docs - tf + 0.5 / tf + 1) / d^2
                 tf = len(term_j_pos)
                 temp_acc = self.__iefscore(td, tf) / Constants.PROX_SEARCH_D**2
@@ -171,16 +171,16 @@ class Model() :
                 p2 += 1
         while (p1 < len(curr_positions)):
             window = abs(int(curr_positions[p1]) - int(term_j_pos[p2-1])) # may need to do p2 -1 or else out of range
-            if window <= Constants.PROX_SEARCH:
+            if window <= Constants.PROX_SEARCH_D:
                 tf = len(term_j_pos)
-                temp_acc = self.__iefscore(td, tf) / Constants.PROX_SEARCH**2
+                temp_acc = self.__iefscore(td, tf) / Constants.PROX_SEARCH_D**2
                 acc += temp_acc
             p1 += 1
         while (p2 < len(term_j_pos)):
             window = abs(int(curr_positions[p1-1]) - int(term_j_pos[p2]))
-            if window <= Constants.PROX_SEARCH:
+            if window <= Constants.PROX_SEARCH_D:
                 tf = len(term_j_pos)
-                temp_acc = self.__iefscore(td, tf) / Constants.PROX_SEARCH**2
+                temp_acc = self.__iefscore(td, tf) / Constants.PROX_SEARCH_D**2
                 acc += temp_acc
             p2 += 1
         return acc
