@@ -24,13 +24,14 @@ def __main__() :
     print('Queries are processed and ready to be used for running on each model')
     # Models to run retrieval models on
     models = [Constants.OKAPI_TF, Constants.TF_IDF, Constants.BM_25, Constants.LM_JELINEKMERCER, Constants.LM_LAPLACE, Constants.PROXIMITY_SEARCH]
+    # Executing Queries for the models on stemmed index
+    __executeQueries(Constants.INDEX_TYPE_STEMMED, Constants.DECOMPRESSED_INDEX, stemmedQueries, models, document_mapping, stemmed_decompressed_index)
+    __executeQueries(Constants.INDEX_TYPE_STEMMED, Constants.COMPRESSED_INDEX, stemmedQueries, models, document_mapping, stemmed_compressed_index)
+    
     # Executing Queries for the models on unstemmed index
     __executeQueries(Constants.INDEX_TYPE_UNSTEMMED, Constants.DECOMPRESSED_INDEX, processedQueries, models, document_mapping, unstemmed_decompressed_index)
     __executeQueries(Constants.INDEX_TYPE_UNSTEMMED, Constants.COMPRESSED_INDEX, processedQueries, models, document_mapping, unstemmed_compressed_index)
     
-    # Executing Queries for the models on stemmed index
-    __executeQueries(Constants.INDEX_TYPE_STEMMED, Constants.DECOMPRESSED_INDEX, stemmedQueries, models, document_mapping, stemmed_decompressed_index)
-    __executeQueries(Constants.INDEX_TYPE_STEMMED, Constants.COMPRESSED_INDEX, stemmedQueries, models, document_mapping, stemmed_compressed_index)
     
     print('The results for each of the model is generated in the output directory')
     
